@@ -1,18 +1,24 @@
+from telebot import types
 import telebot
 import random
 
-bot = telebot.TeleBot('1001914184:AAEuTBl2XfYKdf2qj0GojneFiWDNtMxh084')
 
+promo_check = True
+promo_buff = False
+
+bot = telebot.TeleBot('1001914184:AAEuTBl2XfYKdf2qj0GojneFiWDNtMxh084')
+print('bot started...\n')
 flex_all = 0
 ad = ['Лучший руковод', 'А Анна Романовна где??', 'О великая Хмыз Анастасия Дмитриевнааа']
+print('OK...')
 
 @bot.message_handler(commands=['help'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Команды: \n /get - получить флекс; \n /join - вступить в империю; \n /ad - Анастасия Дмитриевна, она же АД; \n /balance - проверить баланс; \n /rofl - скорей рофлить ; \n')
+    bot.send_message(message.chat.id, 'Команды: \n /get - получить флекс; \n /join - вступить в империю; \n /surprise - лучше б ты не вводил это; \n /leave - покинуть империю; \n /ad - Анастасия Дмитриевна, она же АД; \n /balance - проверить баланс; \n /rofl - скорей рофлить ; \n')
 
 def get_flex(message):
     global flex_all
-    flex_all = 0
+    flex_all = flex_all
     bot.send_message(message.chat.id, 'Напиши "ПОДТВЕРДИТЬ", чтобы завершить транзакцию. ')
     bot.register_next_step_handler(message, flex_reply);
     global flex
@@ -24,6 +30,10 @@ def start_message(message):
     bot.send_message(message.chat.id, 'Окей, сейчас ты получишь флекс. Сколько ты хочешь? (Введи число флексов)')
     bot.register_next_step_handler(message, get_flex);
 
+@bot.message_handler(commands=['leave'])
+def start_message(message):
+    bot.send_message(message.chat.id, 'Прощай, '+ message.from_user.username + '. Иперия будет помнить тебя.')
+
 
 @bot.message_handler(commands=['join'])
 def start_message(message):
@@ -34,21 +44,74 @@ def start_message(message):
 def start_message(message):
     bot.send_message(message.chat.id, random.choice(ad))
 
+@bot.message_handler(commands=['surprise'])
+def start_message(message):
+    bot.send_audio(message.chat.id, audio=open('sukanezabudka.mp3', 'rb'))
+
+@bot.message_handler(content_types=['photo'])
+def start_message(message):
+    bot.send_message(message.chat.id, 'Фото? У меня тоже есть фото')
+    bot.send_photo(message.chat.id, photo=open('dzugan.jpg', 'rb'))
+
+
+@bot.message_handler(commands=['promo'])
+def start_message(message):
+    global promo_check
+    promo_check = promo_check
+    if promo_check == True:
+        bot.send_message(message.chat.id, 'Введи промокод: ')
+        bot.register_next_step_handler(message, get_promo);
+        promo_check = False
+    else:
+         bot.send_message(message.chat.id, 'Ты уже использовал(а) этот промокод. ')
+
+def get_promo(message):
+    global flex_all
+    flex_all = flex_all
+    promo_check = promo_buff
+    if message.text == 'FLEX100':
+        bot.send_message(message.chat.id, 'Получено 100 флекса.')
+        flex_all = flex_all + 100
+    else:
+        bot.send_message(message.chat.id, 'Неверный промокод. ')
+
+
+
+
+
+
 @bot.message_handler(commands=['rofl'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Дзугань уже рофлит')
+    #bot.send_message(message.chat.id, 'Дзугань уже рофлит. Подкинуть его номерок?')
+    keyboard = types.InlineKeyboardMarkup();  # наша клавиатура
+    key_yes = types.InlineKeyboardButton(text='Да', callback_data='yes');  # кнопка «Да»
+    keyboard.add(key_yes);  # добавляем кнопку в клавиатуру
+    key_no = types.InlineKeyboardButton(text='Нет', callback_data='no');
+    keyboard.add(key_no);
+    bot.send_message(message.chat.id, text='Дзугань уже рофлит. Подкинуть его номерок?', reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_worker(call):
+    if call.data == "yes": #call.data это callback_data, которую мы указали при объявлении кнопки
+        bot.send_message(call.message.chat.id, '*тут должен быть номер Ванечки*');
+    elif call.data == "no":
+        bot.send_message(call.message.chat.id, 'Ладно, пока он рофлит без тебя')
+
+@bot.message_handler(content_types=['sticker'])
+def start_message(message):
+    bot.send_sticker(message.chat.id, 'https://github.com/TelegramBots/book/raw/master/src/docs/sticker-fred.webp')
 
 @bot.message_handler(commands=['balance'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Твой баланс - ' + str(flex_all))
+    bot.send_message(message.chat.id, 'Твой баланс - ' + str(flex_all) + ' флекса')
 
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
     if message.text.lower() == 'привет':
-        bot.send_message(message.chat.id, 'Салам алейкум. Бот нашей Империи на связи. Введи /help для справки :) ')
+        bot.send_message(message.chat.id, 'Салам алейкум, '+message.from_user.username+'. Бот нашей Империи на связи. Введи /help для справки :) ')
     elif message.text.lower() == 'пока':
-        bot.send_message(message.chat.id, 'Прощай. Империя не забудет тебя.')
+        bot.send_message(message.chat.id, 'Прощай, товарищ. Империя не забудет тебя.')
     else:
         bot.send_message(message.chat.id, 'Ммм, это что-то новенькое. Такой команды я пока что не знаю) ')
 
